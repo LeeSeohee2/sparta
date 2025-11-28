@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: jwt
+  datasource:
+    url: jdbc:mysql://localhost:3306/chatdb?serverTimezone=Asia/Seoul
+    username: root
+    password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        # ??? ← 여기 중요! Hibernate 6.x 기준 바인딩 파라미터 출력
+        # SQL 실행 파라미터 로그 출력
+        show_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug               # 실제 실행되는 SQL
+    org.hibernate.orm.jdbc.bind: trace     # 바인딩 파라미터 값( ? 에 들어갈 값 )
+
+jwt:
+  secret: "test-secret-key-test-secret-key-1234567890!!"
+  access-token-validity-in-seconds: 3600  #한시간 기준!

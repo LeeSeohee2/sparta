@@ -1,0 +1,104 @@
+// --------------------------------------
+// ERD for Smart Market Live Chat System
+// (Buyer–Seller–Admin Real-time Support)
+// --------------------------------------
+
+
+//// --------------------------------------
+//// 1. Users
+//// --------------------------------------
+Table Users as U {
+  user_id int [pk, increment]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  name varchar(100)
+  role varchar(50) [not null, note: 'buyer, seller, admin']
+  created_at timestamp [default: `now()`]
+}
+
+
+//// --------------------------------------
+//// 2. Chat Rooms
+//// --------------------------------------
+Table ChatRooms as CR {
+  room_id int [pk, increment]
+  created_by int [not null, note: 'User who started the inquiry (buyer)']
+  status varchar(50) [not null, default: 'OPEN', note: 'OPEN, ASSIGNED, CLOSED']
+  created_at timestamp [default: `now()`]
+  closed_at timestamp
+}
+
+
+//// --------------------------------------
+//// 3. Chat Room Participants (N:M)
+//// --------------------------------------
+Table ChatRoomParticipants as CRP {
+  participant_id int [pk, increment]
+  room_id int [not null]
+  user_id int [not null]
+  role varchar(50) [not null, note: 'buyer, seller, admin']
+  last_read_message_id int [note: 'Tracks last read message for read receipts']
+  joined_at timestamp [default: `now()`]
+}
+
+
+//// --------------------------------------
+//// 4. Chat Messages
+//// --------------------------------------
+Table ChatMessages as CM {
+  message_id int [pk, increment]
+  room_id int [not null]
+  sender_id int [not null]
+  type varchar(50) [not null, default: 'TEXT', note: 'TEXT, IMAGE, SYSTEM']
+  content text
+  created_at timestamp [default: `now()`]
+}
+
+
+//// --------------------------------------
+//// 5. Read State (optional if using CRP.last_read_message_id)
+//// --------------------------------------
+Table ReadStates as RS {
+  read_state_id int [pk, increment]
+  room_id int [not null]
+  user_id int [not null]
+  last_read_message_id int [not null]
+  updated_at timestamp [default: `now()`]
+}
+
+
+//// --------------------------------------
+//// 6. Chat History (for admin panel analytics)
+//// --------------------------------------
+Table ChatHistories as CH {
+  history_id int [pk, increment]
+  room_id int [not null]
+  summary text
+  total_messages int
+  duration_minutes int
+  created_at timestamp [default: `now()`]
+}
+
+
+//// --------------------------------------
+//// 7. Relationships
+//// --------------------------------------
+
+// Users
+Ref: U.user_id < CR.created_by
+
+// Participants
+Ref: U.user_id < CRP.user_id
+Ref: CR.room_id < CRP.room_id
+
+// Messages
+Ref: CR.room_id < CM.room_id
+Ref: U.user_id < CM.sender_id
+
+// Read States
+Ref: U.user_id < RS.user_id
+Ref: CR.room_id < RS.room_id
+Ref: CM.message_id < RS.last_read_message_id
+
+// History
+Ref: CR.room_id < CH.room_id
